@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado Lógico Python - Prof. Eliseu</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body { 
+            background-color: #0f141c; 
+            margin: 0; 
+            padding: 15px; 
+            font-family: monospace;
+        }
+        /* Força o terminal do PyScript a ocupar a tela inteira com aspecto profissional */
+        py-terminal { 
+            height: 95vh; 
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <script type="py" terminal>
+import time
+import random
+import sys
+
+# Paleta de Cores ANSI para o design do terminal
+C = '\033[96m'  # Ciano
+G = '\033[92m'  # Verde
+R = '\033[91m'  # Vermelho
+Y = '\033[93m'  # Amarelo
+M = '\033[95m'  # Magenta
+W = '\033[97m'  # Branco
+B = '\033[1m'   # Negrito
+RESET = '\033[0m'
+
+def limpar_tela():
+    # Adaptado para web: imprime uma linha divisória elegante em vez de quebrar o console do navegador
+    print(f"\n{C}-" * 60 + f"{RESET}\n")
+
+# BANCO DE QUESTÕES CATEGORIZADO
+banco_questoes = {
+    "Fácil": [
+        {"q": "Qual das opções cria uma lista vazia?", "o": ["a) lista = ()", "b) lista = {}", "c) lista = []", "d) lista = vazio"], "r": "c", "exp": "Colchetes [] representam listas em Python.", "estudo": "Sintaxe básica de estruturas de dados."},
+        {"q": "Qual operador é usado para verificar se dois valores são iguais?", "o": ["a) =", "b) ==", "c) !=", "d) ==="], "r": "b", "exp": "O sinal '==' é o operador de comparação de igualdade. Um único '=' é para atribuição de valor.", "estudo": "Operadores relacionais (==, !=, >, <)."},
+        {"q": "O que o comando len() faz?", "o": ["a) Lê um input", "b) Soma os valores", "c) Retorna o tamanho de um objeto", "d) Limpa a tela"], "r": "c", "exp": "len() vem de 'length' (comprimento) e conta quantos itens existem em uma lista ou string.", "estudo": "Funções embutidas (built-in functions) do Python."}
+    ],
+    "Médio": [
+        {"q": "No Bubble Sort, qual é a principal ação realizada repetidamente?", "o": ["a) Dividir a lista ao meio", "b) Trocar elementos vizinhos se estiverem fora de ordem", "c) Inserir o último elemento no início", "d) Escolher um pivô aleatório"], "r": "b", "exp": "O Bubble Sort funciona 'borbulhando' os maiores valores para o fim da lista através da troca de itens adjacentes.", "estudo": "Lógica e mecânica do Algoritmo Bubble Sort."},
+        {"q": "O que acontece se tentarmos acessar lista[5] em uma lista de tamanho 4?", "o": ["a) Retorna 0", "b) Retorna None", "c) Erro IndexError", "d) Adiciona um novo elemento"], "r": "c", "exp": "Tentar acessar um índice que não existe na lista gera a exceção IndexError (Índice fora dos limites).", "estudo": "Tratamento de Exceções e Indexação de Listas."},
+        {"q": "Qual será o resultado de [1, 2] + [3, 4]?", "o": ["a) [4, 6]", "b) [1, 2, 3, 4]", "c) Erro", "d) [[1, 2], [3, 4]]"], "r": "b", "exp": "O operador '+' entre listas realiza a concatenação, unindo-as em uma única lista maior.", "estudo": "Operações matemáticas aplicadas a listas (Concatenação)."}
+    ],
+    "Difícil": [
+        {"q": "Na ordenação Insertion Sort, como o algoritmo organiza os dados?", "o": ["a) Troca vizinhos do início ao fim", "b) Divide a lista recursivamente", "c) Constrói a lista final um item de cada vez, inserindo-o na posição correta", "d) Busca o menor valor e coloca no final"], "r": "c", "exp": "O Insertion Sort simula a organização de cartas na mão, pegando um item e movendo-o para trás até encontrar sua posição ordenada.", "estudo": "Algoritmo Insertion Sort e suas diferenças para o Bubble Sort."},
+        {"q": "Qual é a complexidade de tempo do Pior Caso do Bubble Sort?", "o": ["a) O(1)", "b) O(log n)", "c) O(n)", "d) O(n²)"], "r": "d", "exp": "No pior caso (lista invertida), o Bubble Sort precisa de dois loops aninhados (for dentro de for) iterando por todos os elementos, resultando em O(n²).", "estudo": "Complexidade de Algoritmos (Notação Big-O)."}
+    ],
+    "Eliseu": [
+        {"q": "Dada a matriz M = [[2, 3], [1, 4]]. Qual é o determinante?", "o": ["a) 5", "b) 8", "c) 11", "d) 2"], "r": "a", "exp": "A fórmula do determinante de matriz 2x2 é (a*d) - (b*c). Então (2*4) - (3*1) = 8 - 3 = 5.", "estudo": "Matrizes e Álgebra Linear aplicada a programação."},
+        {"q": "Sobre a eficiência da Busca Binária vs Busca Linear, é correto afirmar:", "o": ["a) A busca binária é O(log n) mas exige lista ordenada.", "b) A busca linear é mais rápida em listas gigantes ordenadas.", "c) A busca binária funciona em qualquer lista bagunçada.", "d) Ambas têm complexidade O(n) no pior caso."], "r": "a", "exp": "A busca binária corta o espaço de busca pela metade a cada iteração O(log n), mas a premissa matemática para funcionar é que os dados estejam previamente ordenados.", "estudo": "Busca Binária e pré-requisitos de algoritmos otimizados."}
+    ]
+}
+
+def configurar_simulado():
+    limpar_tela()
+    print(f"{C}{B}" + "="*60 + f"{RESET}")
+    print(f"{C}{B}      🖥️  SIMULADOR LÓGICO PYTHON - V2.0 🖥️{RESET}")
+    print(f"{C}{B}          [Ambiente de Execução Web: PyScript]{RESET}")
+    print(f"{C}{B}" + "="*60 + f"{RESET}\n")
+    
+    while True:
+        try:
+            qtd = int(input(f"{W}1. Quantas questões deseja responder? (Ex: 1 a 10): {RESET}"))
+            if qtd > 0: break
+            print(f"{R}Por favor, digite um número maior que zero.{RESET}")
+        except ValueError:
+            print(f"{R}Entrada inválida. Digite um número inteiro.{RESET}")
+
+    print(f"\n{W}2. Escolha a Dificuldade:{RESET}")
+    print(f"  {G}[1] Fácil{RESET} (Base sintática)")
+    print(f"  {Y}[2] Médio{RESET} (Lógica e Operações)")
+    print(f"  {R}[3] Difícil{RESET} (Algoritmos e Estruturas)")
+    print(f"  {M}[4] Nível 'Eliseu'{RESET} (Matemática e Complexidade Avançada)")
+    print(f"  {C}[5] Aleatório{RESET} (Mistura de todos os níveis)")
+    
+    op_dif = input(f"{W}Escolha [1-5]: {RESET}").strip()
+    mapa_dif = {'1': ["Fácil"], '2': ["Médio"], '3': ["Difícil"], '4': ["Eliseu"], '5': ["Fácil", "Médio", "Difícil", "Eliseu"]}
+    niveis_escolhidos = mapa_dif.get(op_dif, ["Fácil", "Médio", "Difícil", "Eliseu"])
+
+    print(f"\n{W}3. Modo Desafio (Cronômetro):{RESET}")
+    print("  Digite o tempo em minutos (15 a 120).")
+    print("  Digite '0' para jogar sem limite de tempo.")
+    while True:
+        try:
+            tempo_min = int(input(f"{W}Tempo (minutos): {RESET}"))
+            if tempo_min >= 0: break
+            print(f"{R}Tempo não pode ser negativo.{RESET}")
+        except ValueError:
+            print(f"{R}Entrada inválida.{RESET}")
+
+    return qtd, niveis_escolhidos, tempo_min
+
+def rodar_simulado(qtd, niveis, tempo_min):
+    questoes_disponiveis = []
+    for nivel in niveis:
+        questoes_disponiveis.extend(banco_questoes.get(nivel, []))
+    
+    random.shuffle(questoes_disponiveis)
+    questoes_selecionadas = questoes_disponiveis[:qtd]
+    
+    if not questoes_selecionadas:
+        print(f"{R}Nenhuma questão encontrada para os critérios.{RESET}")
+        return
+
+    tempo_fim = time.time() + (tempo_min * 60) if tempo_min > 0 else None
+    
+    acertos = 0
+    erros_detalhes = []
+    questoes_respondidas = 0
+
+    limpar_tela()
+    print(f"{Y}{B}COMPILANDO SEU AMBIENTE DE PROVA...{RESET}")
+    time.sleep(1)
+
+    for i, q in enumerate(questoes_selecionadas):
+        if tempo_fim:
+            restante = tempo_fim - time.time()
+            if restante <= 0:
+                print(f"\n{R}{B}⏰ TEMPO ESGOTADO! FINALIZANDO PROVA AUTOMATICAMENTE. ⏰{RESET}")
+                break
+
+        limpar_tela()
+        print(f"{C}{B}Questão {i+1} de {len(questoes_selecionadas)}{RESET}")
+        
+        if tempo_fim:
+            restante = max(0, tempo_fim - time.time())
+            mins, secs = divmod(int(restante), 60)
+            cor_tempo = G if restante > 300 else R
+            print(f"{cor_tempo}{B}Tempo Restante: {mins:02d}:{secs:02d}{RESET}")
+            
+        print("-" * 50)
+        print(f"{W}{B}{q['q']}{RESET}\n")
+        
+        for opcao in q['o']:
+            print(f"{W}{opcao}{RESET}")
+        
+        resposta = input(f"\n{C}Sua resposta (a/b/c/d): {RESET}").strip().lower()
+
+        if tempo_fim and time.time() > tempo_fim:
+            print(f"\n{R}{B}⏰ O tempo esgotou durante a resposta! Questão desconsiderada. ⏰{RESET}")
+            break
+
+        questoes_respondidas += 1
+
+        if resposta == q['r']:
+            print(f"\n{G}{B}✅ REGISTRADO!{RESET}")
+            acertos += 1
+        else:
+            print(f"\n{R}{B}❌ REGISTRADO.{RESET}")
+            erros_detalhes.append(q)
+        
+        input(f"\n{Y}Pressione ENTER para continuar...{RESET}")
+
+    limpar_tela()
+    print(f"{C}{B}" + "="*60 + f"{RESET}")
+    print(f"{C}{B}      📊 RELATÓRIO DE DESEMPENHO TÉCNICO 📊{RESET}")
+    print(f"{C}{B}" + "="*60 + f"{RESET}\n")
+
+    if questoes_respondidas == 0:
+        print("Nenhuma questão foi processada.")
+        return
+
+    aproveitamento = (acertos / questoes_respondidas) * 100
+    print(f"{W}Questões respondidas: {questoes_respondidas}{RESET}")
+    print(f"{G}Acertos: {acertos}{RESET}")
+    print(f"{R}Erros: {questoes_respondidas - acertos}{RESET}")
+    print(f"{Y}Taxa de Performance: {aproveitamento:.1f}%{RESET}\n")
+
+    if erros_detalhes:
+        print(f"{M}{B}--- 🛠️ MAPA DE REVISÃO PEDAGÓGICA 🛠️ ---{RESET}")
+        print(f"{W}Use o guia abaixo para eliminar os 'bugs' de conceito:{RESET}\n")
+        
+        for erro in erros_detalhes:
+            print(f"{R}Tópico da questão:{RESET} {erro['q']}")
+            print(f"{G}Análise Lógica:{RESET} {erro['exp']}")
+            print(f"{Y}O que estudar para dominar:{RESET} {erro['estudo']}")
+            print("-" * 60)
+    else:
+        print(f"{G}{B}🏆 DESEMPENHO MÁXIMO ATINGIDO! 🏆{RESET}")
+        print("Sua infraestrutura de lógica está rodando sem gargalos.")
+
+if __name__ == "__main__":
+    try:
+        q, n, t = configurar_simulado()
+        rodar_simulado(q, n, t)
+    except Exception as e:
+        print(f"\n Ocorreu um erro na execução do interpretador: {e}")
+    </script>
+</body>
+</html>
